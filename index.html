@@ -303,6 +303,16 @@
       </select>
     </div>
     <div class="filter-group">
+      <label>Office Group</label>
+      <select id="filter-office-group">
+        <option value="">All Groups</option>
+        <option value="Statewide">Statewide</option>
+        <option value="State Senate">State Senate</option>
+        <option value="House of Delegates">House of Delegates</option>
+        <option value="Local">Local</option>
+      </select>
+    </div>
+    <div class="filter-group">
       <label>Office</label>
       <select id="filter-office"><option value="">All Offices</option></select>
     </div>
@@ -412,6 +422,7 @@ function applyFilters() {
   const office = document.getElementById('filter-office').value;
   const locality = document.getElementById('filter-locality').value;
   const party = document.getElementById('filter-party').value;
+  const offGroup = document.getElementById('filter-office-group').value;
   const won = document.getElementById('filter-won').value;
 
   filtered = allCandidates.filter(c => {
@@ -425,6 +436,7 @@ function applyFilters() {
       if (ey !== year) return false;
     }
     if (offType && c.OfficeType !== offType) return false;
+    if (offGroup && c.OfficeGroup !== offGroup) return false;
     if (office && c.OfficeSoughtName !== office) return false;
     if (locality && c.LocalityName !== locality) return false;
     if (party && c.PartyCode !== party) return false;
@@ -441,7 +453,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-  ['search','filter-year','filter-office-type','filter-office','filter-locality','filter-party','filter-won']
+  ['search','filter-year','filter-office-type','filter-office-group','filter-office','filter-locality','filter-party','filter-won']
     .forEach(id => { const el = document.getElementById(id); el.value = ''; });
   applyFilters();
 }
