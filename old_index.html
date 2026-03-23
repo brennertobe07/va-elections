@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virginia Candidate Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f5f6f8;
+    color: #222;
+    font-family: 'Open Sans', sans-serif;
+    font-size:  14px;
+  }
+
+  .page-header {
+    background: #fff;
+    border-bottom: 2px solid #e0e4ea;
+    padding: 18px 28px 14px;
+  }
+
+  .page-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 3px;
+  }
+
+  .page-header .subtitle { font-size: 0.82rem; color: #666; }
+
+  #meta-bar { font-size: 0.75rem; color: #888; margin-top: 6px; }
+
+  .filter-panel {
+    background: #fff;
+    border: 1px solid #dde1e8;
+    border-radius: 4px;
+    margin: 16px 20px 0;
+    padding: 14px 18px;
+  }
+
+  .filter-panel h2 {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #555;
+    margin-bottom: 12px;
+  }
+
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 3px; }
+
+  .filter-group label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  select, input[type="text"] {
+    border: 1px solid #ccd0d8;
+    background: #fff;
+    color: #222;
+    padding: 5px 8px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.82rem;
+    border-radius: 3px;
+    outline: none;
+    min-width: 140px;
+    height: 30px;
+  }
+
+  select:focus, input:focus { border-color: #3a6bc7; }
+  input[type="text"] { min-width: 200px; }
+
+  .btn {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 3px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .btn-primary { background: #3a6bc7; color: #fff; }
+  .btn-primary:hover { background: #2f59a8; }
+  .btn-secondary { background: #fff; color: #555; border: 1px solid #ccd0d8; }
+  .btn-secondary:hover { background: #f0f2f6; }
+
+  .filter-count {
+    font-size: 0.78rem;
+    color: #3a6bc7;
+    font-weight: 600;
+    margin-left: auto;
+    align-self: flex-end;
+    white-space: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .table-wrap {
+    margin: 14px 20px 30px;
+    background: #fff;
+    border: 1px solid #dde1e8;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+
+  thead tr { background: #3a6bc7; }
+
+  thead th {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: left;
+    padding: 10px 10px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th:hover { background: #2f59a8; }
+  thead th.sorted { background: #2448a0; }
+  thead th .sort-arrow { margin-left: 4px; opacity: 0.7; font-size: 0.7rem; }
+
+  tbody tr { border-bottom: 1px solid #eaecf0; cursor: pointer; transition: background 0.1s; }
+  tbody tr:nth-child(even) { background: #f8f9fc; }
+  tbody tr:hover { background: #eef2fb; }
+
+  td { padding: 8px 10px; vertical-align: middle; }
+
+  td.name-cell { font-weight: 600; color: #1a1a2e; }
+  td.name-cell .committee { font-size: 0.68rem; color: #999; font-weight: 400; margin-top: 1px; }
+
+  .party-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .party-D  { background: #ddeaf9; color: #1a5cb0; }
+  .party-R  { background: #fce8e6; color: #b01a1a; }
+  .party-I  { background: #eeeff2; color: #555; }
+  .party-L  { background: #fff3e0; color: #a05a00; }
+  .party-SD { background: #ddeaf9; color: #1a5cb0; }
+  .party-SR { background: #fce8e6; color: #b01a1a; }
+
+  .won-yes {
+    display: inline-block;
+    background: #e6f4ec;
+    color: #1a7a3a;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .support-bar { display: flex; align-items: center; gap: 6px; }
+  .support-bar .bar { width: 55px; height: 6px; background: #e0e4ea; border-radius: 3px; overflow: hidden; }
+  .support-bar .fill { height: 100%; background: #3a6bc7; border-radius: 3px; }
+  .support-bar .val { font-size: 0.72rem; color: #555; min-width: 36px; }
+
+  .money { color: #1a5cb0; font-weight: 600; }
+  .null-val { color: #bbb; font-style: italic; font-size: 0.7rem; }
+
+  .district-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .dist-tag {
+    background: #eef2fb;
+    color: #3a6bc7;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #fff;
+    border-radius: 5px;
+    width: 720px;
+    max-width: 95vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 28px;
+    position: relative;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 18px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: #999;
+    cursor: pointer;
+  }
+  .modal-close:hover { color: #333; }
+
+  .modal h2 { font-size: 1.25rem; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+  .modal .modal-sub { font-size: 0.78rem; color: #888; margin-bottom: 20px; }
+
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .modal-section {
+    background: #f8f9fc;
+    border: 1px solid #e0e4ea;
+    border-radius: 4px;
+    padding: 14px;
+  }
+
+  .modal-section h3 {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #3a6bc7;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #dde1e8;
+  }
+
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+    border-bottom: 1px solid #f0f2f6;
+    gap: 10px;
+  }
+  .modal-row:last-child { border-bottom: none; }
+  .modal-row .lbl { color: #888; font-size: 0.75rem; white-space: nowrap; }
+  .modal-row .val { font-size: 0.78rem; font-weight: 600; color: #222; text-align: right; word-break: break-word; max-width: 60%; }
+
+  #loading { text-align: center; padding: 60px; color: #888; }
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid #dde1e8;
+    border-top-color: #3a6bc7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .page-footer { text-align: center; padding: 12px; font-size: 0.72rem; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Virginia Candidate Explorer</h1>
+  <div class="subtitle">Election Results · Campaign Finance · Voter File Data — DPVA</div>
+  <div id="meta-bar">Loading...</div>
+</div>
+
+<div class="filter-panel">
+  <h2>Filter Candidates</h2>
+  <div class="filter-row">
+    <div class="filter-group">
+      <label>Search</label>
+      <input type="text" id="search" placeholder="Name, office, locality...">
+    </div>
+    <div class="filter-group">
+      <label>Election Year</label>
+      <select id="filter-year"><option value="">All Years</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Office Type</label>
+      <select id="filter-office-type">
+        <option value="">All Types</option>
+        <option value="State">State</option>
+        <option value="Local">Local</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Office Group</label>
+      <select id="filter-office-group">
+        <option value="">All Groups</option>
+        <option value="Statewide">Statewide</option>
+        <option value="Governor">Governor</option>
+        <option value="State Senate">State Senate</option>
+        <option value="House of Delegates">House of Delegates</option>
+        <option value="Board of Supervisors">Board of Supervisors</option>
+        <option value="City Council">City Council</option>
+        <option value="Town Council">Town Council</option>
+        <option value="Mayor">Mayor</option>
+        <option value="School Board">School Board</option>
+        <option value="Commonwealth's Attorney">Commonwealth's Attorney</option>
+        <option value="Sheriff">Sheriff</option>
+        <option value="Treasurer">Treasurer</option>
+        <option value="Clerk of Court">Clerk of Court</option>
+        <option value="Commissioner of Revenue">Commissioner of Revenue</option>
+        <option value="Soil &amp; Water Conservation">Soil &amp; Water Conservation</option>
+        <option value="County Board">County Board</option>
+        <option value="Local">Local</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Office</label>
+      <select id="filter-office"><option value="">All Offices</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Locality</label>
+      <select id="filter-locality"><option value="">All Localities</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Party</label>
+      <select id="filter-party">
+        <option value="">All Parties</option>
+        <option value="Democratic">Democratic</option>
+        <option value="Republican">Republican</option>
+        <option value="Independent">Independent</option>
+        <option value="Libertarian">Libertarian</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Result</label>
+      <select id="filter-won">
+        <option value="">All</option>
+        <option value="1">Winners Only</option>
+        <option value="0">Non-Winners</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="applyFilters()">Search</button>
+    <button class="btn btn-secondary" onclick="clearFilters()">Clear</button>
+    <div class="filter-count" id="filter-count"></div>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <div id="loading"><span class="spinner"></span>Loading election data...</div>
+  <table id="main-table" style="display:none">
+    <thead>
+      <tr>
+        <th onclick="sortBy('CandidateLastName')" data-col="CandidateLastName">Candidate <span class="sort-arrow">↕</span></th>
+        <th onclick="sortBy('ElectionDate')" data-col="ElectionDate" class="sorted">Election <span class="sort-arrow">↓</span></th>
+        <th onclick="sortBy('OfficeSoughtName')" data-col="OfficeSoughtName">Office <span class="sort-arrow">↕</span></th>
+        <th onclick="sortBy('LocalityName')" data-col="LocalityName">Locality <span class="sort-arrow">↕</span></th>
+        <th>Party</th>
+        <th onclick="sortBy('TotalVotes')" data-col="TotalVotes">Votes <span class="sort-arrow">↕</span></th>
+        <th>Result</th>
+        <th onclick="sortBy('TotalAmount')" data-col="TotalAmount">Total Raised <span class="sort-arrow">↕</span></th>
+        <th>Dem Support</th>
+        <th>Districts</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="page-footer" id="page-footer"></div>
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModalDirect()">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+let allCandidates = [], filtered = [];
+let sortCol = 'ElectionDate', sortDir = -1;
+const PAGE_SIZE = 500;
+
+async function loadData() {
+  try {
+    const [cRes, eRes, oRes, lRes, mRes] = await Promise.all([
+      fetch('data/candidates.json'), fetch('data/elections.json'),
+      fetch('data/offices.json'), fetch('data/localities.json'), fetch('data/meta.json')
+    ]);
+    allCandidates = await cRes.json();
+    populateFilters(await eRes.json(), await oRes.json(), await lRes.json());
+    updateMeta(await mRes.json());
+    applyFilters();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('main-table').style.display = 'table';
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<span style="color:#c0392b">Error loading data: ' + e.message + '</span>';
+  }
+}
+
+function populateFilters(elections, offices, localities) {
+  const years = [...new Set(elections.map(e => e.ElectionYear).filter(Boolean))].sort().reverse();
+  const yearSel = document.getElementById('filter-year');
+  years.forEach(y => { const o = document.createElement('option'); o.value = y; o.textContent = y; yearSel.appendChild(o); });
+
+  const officeSel = document.getElementById('filter-office');
+  offices.forEach(o => { const el = document.createElement('option'); el.value = o.OfficeSoughtName; el.textContent = o.OfficeSoughtName + ' (' + o.CandidateCount + ')'; officeSel.appendChild(el); });
+
+  const locSel = document.getElementById('filter-locality');
+  localities.forEach(l => { const el = document.createElement('option'); el.value = l.LocalityName; el.textContent = l.LocalityName; locSel.appendChild(el); });
+}
+
+function updateMeta(meta) {
+  document.getElementById('meta-bar').innerHTML =
+    (meta.TotalCandidates||0).toLocaleString() + ' candidates &nbsp;|&nbsp; ' +
+    (meta.Winners||0).toLocaleString() + ' winners &nbsp;|&nbsp; Data as of ' +
+    (meta.LastRefreshDate ? meta.LastRefreshDate.substring(0,10) : 'unknown');
+}
+
+function applyFilters() {
+  const search = document.getElementById('search').value.toLowerCase().trim();
+  const year = document.getElementById('filter-year').value;
+  const offType = document.getElementById('filter-office-type').value;
+  const office = document.getElementById('filter-office').value;
+  const locality = document.getElementById('filter-locality').value;
+  const party = document.getElementById('filter-party').value;
+  const offGroup = document.getElementById('filter-office-group').value;
+  const won = document.getElementById('filter-won').value;
+
+  filtered = allCandidates.filter(c => {
+    if (search) {
+      const hay = [c.CandidateFirstName,c.CandidateLastName,c.CandidateFullName,c.LocalityName,c.DistrictName,c.OfficeSoughtName,c.CommitteeName].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    if (year && c.ElectionDate) {
+      const parts = c.ElectionDate.split('/');
+      const ey = parts.length === 3 ? (parts[2].length === 2 ? '20' + parts[2] : parts[2]) : '';
+      if (ey !== year) return false;
+    }
+    if (offType && c.OfficeType !== offType) return false;
+    if (offGroup && c.OfficeGroup !== offGroup) return false;
+    if (office && c.OfficeSoughtName !== office) return false;
+    if (locality && c.LocalityName !== locality) return false;
+    if (party && c.PartyCode !== party) return false;
+    if (won !== '' && String(c.Won) !== won) return false;
+    return true;
+  });
+
+  sortData(); renderTable();
+  const showing = Math.min(filtered.length, PAGE_SIZE);
+  document.getElementById('filter-count').textContent =
+    'Showing ' + showing.toLocaleString() + ' of ' + filtered.length.toLocaleString() + ' (total: ' + allCandidates.length.toLocaleString() + ')';
+  document.getElementById('page-footer').textContent =
+    filtered.length > PAGE_SIZE ? 'Showing first ' + PAGE_SIZE + ' results — use filters to narrow.' : '';
+}
+
+function clearFilters() {
+  ['search','filter-year','filter-office-type','filter-office-group','filter-office','filter-locality','filter-party','filter-won']
+    .forEach(id => { const el = document.getElementById(id); el.value = ''; });
+  applyFilters();
+}
+
+function sortBy(col) {
+  sortDir = sortCol === col ? sortDir * -1 : (col === 'ElectionDate' ? -1 : 1);
+  sortCol = col;
+  document.querySelectorAll('thead th').forEach(th => { th.classList.remove('sorted'); const a = th.querySelector('.sort-arrow'); if(a) a.textContent='↕'; });
+  const th = document.querySelector(`thead th[data-col="${col}"]`);
+  if (th) { th.classList.add('sorted'); th.querySelector('.sort-arrow').textContent = sortDir===1?'↑':'↓'; }
+  sortData(); renderTable();
+}
+
+function sortData() {
+  filtered.sort((a,b) => {
+    let va=a[sortCol], vb=b[sortCol];
+    if(va===null||va===undefined) return 1;
+    if(vb===null||vb===undefined) return -1;
+    if(typeof va==='number') return (va-vb)*sortDir;
+    return String(va).localeCompare(String(vb))*sortDir;
+  });
+}
+
+function renderTable() {
+  document.getElementById('table-body').innerHTML = filtered.slice(0,PAGE_SIZE).map(c => {
+    const name = (c.CandidateFullName||((c.CandidateFirstName||'')+' '+(c.CandidateLastName||''))).trim();
+    const p = c.PartyCode||'', lp = c.LikelyParty||'';
+    let pcls='party-I', plbl=p||lp||'—';
+    if(p.includes('Democratic')||lp==='SD'){pcls='party-D';plbl=p||'Dem (modeled)';}
+    else if(p.includes('Republican')||lp==='SR'){pcls='party-R';plbl=p||'Rep (modeled)';}
+    else if(p.includes('Libertarian')){pcls='party-L';plbl='Libertarian';}
+    const badge = `<span class="party-badge ${pcls}">${plbl.length>20?plbl.substring(0,18)+'…':plbl}</span>`;
+    const won = c.Won ? '<span class="won-yes">✓ Won</span>' : '<span class="null-val">—</span>';
+    const votes = c.TotalVotes!==null&&c.TotalVotes!==undefined ? parseInt(c.TotalVotes).toLocaleString() : '<span class="null-val">—</span>';
+    const money = c.TotalAmount!==null&&c.TotalAmount!==undefined ? '<span class="money">$'+parseFloat(c.TotalAmount).toLocaleString('en-US',{maximumFractionDigits:0})+'</span>' : '<span class="null-val">—</span>';
+    const support = c.DNCDemPartySupport ? `<div class="support-bar"><div class="bar"><div class="fill" style="width:${parseFloat(c.DNCDemPartySupport)}%"></div></div><span class="val">${parseFloat(c.DNCDemPartySupport).toFixed(1)}%</span></div>` : '<span class="null-val">—</span>';
+    const dists = [c.Current_CD?'CD-'+c.Current_CD:'',c.SD?'SD-'+c.SD:'',c.HD?'HD-'+c.HD:''].filter(Boolean);
+    const distHtml = dists.length ? '<div class="district-tags">'+dists.map(d=>`<span class="dist-tag">${d}</span>`).join('')+'</div>' : '<span class="null-val">—</span>';
+    return `<tr onclick="showDetail(${c.SummaryId})">
+      <td class="name-cell">${name}<div class="committee">${c.CommitteeCode||''}</div></td>
+      <td>${c.ElectionDate||'—'}</td>
+      <td title="${c.OfficeSoughtName||''}" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.OfficeSoughtName||'—'}</td>
+      <td>${c.LocalityName||'—'}</td>
+      <td>${badge}</td><td>${votes}</td><td>${won}</td><td>${money}</td><td>${support}</td><td>${distHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+let candidateMap = {};
+function showDetail(id) {
+  if(!Object.keys(candidateMap).length) allCandidates.forEach(c=>{candidateMap[c.SummaryId]=c;});
+  const c = candidateMap[id]; if(!c) return;
+  const name = (c.CandidateFullName||[c.CandidateFirstName,c.CandidateMiddleName,c.CandidateLastName,c.CandidateSuffix].filter(Boolean).join(' ')).trim();
+  const row = (lbl,val,fmt) => {
+    const v = (val!==null&&val!==undefined&&val!=='')?(fmt?fmt(val):val):'—';
+    return `<div class="modal-row"><span class="lbl">${lbl}</span><span class="val">${v}</span></div>`;
+  };
+  document.getElementById('modal-body').innerHTML = `
+    <h2>${name}</h2>
+    <div class="modal-sub">${c.CommitteeCode||''} &nbsp;·&nbsp; ${c.ElectionDate||''} &nbsp;·&nbsp; ${c.OfficeSoughtName||''}</div>
+    <div class="modal-grid">
+      <div class="modal-section"><h3>Election</h3>
+        ${row('Election Date',c.ElectionDate)}${row('Election Name',c.ElectionName)}
+        ${row('Office',c.OfficeSoughtName)}${row('Office Type',c.OfficeType)}
+        ${row('Locality',c.LocalityName)}${row('District',c.DistrictName)}
+        ${row('Filed Party',c.PoliticalPartyName)}${row('Result Party',c.PartyCode)}
+        ${row('Total Votes',c.TotalVotes,v=>parseInt(v).toLocaleString())}
+        ${row('Won',c.Won?'✓ Yes':'No')}
+      </div>
+      <div class="modal-section"><h3>Campaign Finance</h3>
+        ${row('Committee',c.CommitteeName)}
+        ${row('Total Raised',c.TotalAmount,v=>'$'+parseFloat(v).toLocaleString())}
+        ${row('Largest Gift',c.MaxAmount,v=>'$'+parseFloat(v).toLocaleString())}
+        ${row('Avg Gift',c.AvgAmount,v=>'$'+parseFloat(v).toFixed(2))}
+        ${row('# Contributions',c.ContributionCount,v=>parseInt(v).toLocaleString())}
+        ${row('First Contribution',c.FirstContribDate)}${row('Last Contribution',c.LastContribDate)}
+        ${row('Last Type',c.LastDType)}
+        ${row('Has Federal',c.HasFedContrib?'Yes':'No')}${row('Has State',c.HasStateContrib?'Yes':'No')}
+        ${row('Has DPVA',c.HasDPVAContrib?'Yes':'No')}${row('Has ActBlue',c.HasABContrib?'Yes':'No')}
+      </div>
+      <div class="modal-section"><h3>Voter File</h3>
+        ${row('State File ID',c.StateFileID)}${row('VAN ID',c.VoterRegistrationid)}
+        ${row('Likely Party',c.LikelyParty)}
+        ${row('Dem Support Score',c.DNCDemPartySupport,v=>parseFloat(v).toFixed(2)+'%')}
+        ${row('VAN Match Status',c.VAN_MatchStatus)}
+      </div>
+      <div class="modal-section"><h3>Districts</h3>
+        ${row('Current CD',c.Current_CD)}${row('Current CD Member',c.Current_CD_Member)}
+        ${row('Current CD Party',c.Current_CD_Party)}${row('Proposed New CD',c.New_CD)}
+        ${row('Senate District',c.SD)}${row('SD Member',c.SD_Member)}${row('SD Party',c.SD_Party)}
+        ${row('House District',c.HD)}${row('HD Member',c.HD_Member)}${row('HD Party',c.HD_Party)}
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) { if(e.target===document.getElementById('modal-overlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModalDirect(); });
+
+loadData();
+</script>
+</body>
+</html>
