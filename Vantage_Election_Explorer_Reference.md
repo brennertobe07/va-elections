@@ -16,14 +16,16 @@ Vantage is a single-file HTML application that displays NCEC targeting data for 
 ## File Locations
 
 ### GitHub Repository
-- **Repo:** `brennertobe07/Vantage`
-- **Local Path:** `C:\Users\brenner_tobe\Documents\GitHub\Vantage\`
+- **Repo:** `brennertobe07/va-elections`
+- **Local Path:** `C:\Users\brenner_tobe\Documents\GitHub\va-elections\`
 - **Main File:** `index.html`
+- **Regen Script:** `embed_ncec_data.py` (re-embeds `NCEC_DATA` from the xlsx)
 
 ### Source Data
-- **NCEC Targeting File:** `va_26_02_17_legislative_ncec_targeting__for_2026_election__with_perfrange26_.xlsx`
+- **NCEC Targeting File:** `C:\Temp\NCEC 2026\va_26.02.17_legislative_ncec_targeting (for 2026 election, with perfrange26).xlsx`
 - **Sheet:** "NCEC Targeting"
 - **Records:** 2,694 total (1 statewide, 133 counties, 2,560 precincts)
+- **CD:** populated at precinct level only (counties can span multiple CDs)
 
 ---
 
@@ -32,21 +34,24 @@ Vantage is a single-file HTML application that displays NCEC targeting data for 
 ### Tabs
 1. **Dashboard** — Statewide stats (ExpVote, DemPerf, Persuasion, DemBase), performance distribution bar chart, recent race results
 2. **Counties** — 133 counties, searchable/filterable by performance category, sortable columns, flag button
+   - **CD(s) column:** shows every Congressional District a county spans (derived from its precincts)
    - **Drill-down:** Click county name → switches to Precincts tab filtered to that county
-3. **Precincts** — 2,560 precincts, filter by County + HD + SD + Performance category
-4. **Districts** — HD grid (1-100) + SD grid (1-40), color-coded by party
+3. **Precincts** — 2,560 precincts, filter by County + HD + SD + **CD** + Performance category; table shows HD/SD/**CD** per precinct
+4. **Districts** — HD grid (1-100) + SD grid (1-40) + **CD grid (1-11)**, color-coded by party
    - Click any district → Modal popup with incumbent info, stats, and precinct list
+   - All three district types share one modal/flag flow (`selectDistrict(type, n)`, type = `hd`/`sd`/`cd`)
 5. **Targets** — All flagged items, Mobilize/Persuade tags, Export CSV, Clear All
 
 ### Flagging System
 - Counties: key = `county-{name}`
 - Precincts: key = `precinct-{county}-{precinct_code}`
-- Districts: key = `hd-{n}` or `sd-{n}`
+- Districts: key = `hd-{n}`, `sd-{n}`, or `cd-{n}`
 - Stored in browser localStorage (device-specific)
 
 ### Incumbent Data (Embedded)
 - **HOUSE_MEMBERS:** All 100 House Delegates with name and party
 - **SENATE_MEMBERS:** All 40 State Senators with name and party
+- **CD_MEMBERS:** All 11 U.S. House members with name and party (6 D / 5 R)
 - Notable: HD 98 = VACANT (Barry Knight died Feb 2026), SD 39 = Elizabeth Bennett-Parker (D, new Feb 2026)
 
 ---
@@ -133,27 +138,27 @@ Vantage uses the DPVA dark theme (same as Absentee Dashboard):
 
 ## Data Regeneration (if needed)
 
-If NCEC data needs to be re-embedded:
+When the NCEC source data refreshes, run the committed script:
+
+```
+python embed_ncec_data.py
+```
+
+It reads the xlsx (path configured at the top of the script), filters to the
+three summary levels, selects the embedded columns, and replaces the single
+`const NCEC_DATA = [...]` line in `index.html` (writing `index.html.bak` first).
+
+Embedded columns (order matters — `cd` sits right after `precinct_code`):
 
 ```python
-import pandas as pd, json
-
-xl = pd.ExcelFile('va_26_02_17_legislative_ncec_targeting__for_2026_election__with_perfrange26_.xlsx')
-df = pd.read_excel(xl, sheet_name='NCEC Targeting')
-
-levels_needed = ['STATEWIDE', 'COUNTY', 'PRECINCT (FULL SPLITS)']
-df_filtered = df[df['summary_level'].isin(levels_needed)].copy()
-
-cols = ['summary_level', 'county', 'precinct', 'precinct_code', 'hd', 'sd',
+cols = ['summary_level', 'county', 'precinct', 'precinct_code', 'cd', 'hd', 'sd',
         'expvote26', 'demperf26', 'perfrange26', 'dembase26',
         'gov25dem2way', 'pres24dem2way', 'ltgov25dem2way', 'ussen24dem2way',
         'ag25dem2way', 'gov21dem2way', 'pres20dem2way']
-
-df_export = df_filtered[cols].copy()
-data_json = df_export.to_json(orient='records')
-
-# Embed into HTML template replacing the NCEC_DATA constant
 ```
+
+`cd`/`hd`/`sd` are float in the source (e.g. `7.0`, null on non-precinct rows) and
+embed/compare fine as JS numbers.
 
 ---
 
@@ -163,6 +168,7 @@ data_json = df_export.to_json(orient='records')
 |------|---------|-------|
 | Mar 2026 | v1 (blue) | Original DPVA blue theme |
 | Mar 2026 | v2 (Vantage) | Dark theme rebrand, logo, drill-down from counties |
+| Jun 2026 | v3 (CD) | Congressional District support: `cd` embedded, CD filter + table column on Precincts, CD(s) on Counties, CD grid/modal/flagging/export |
 
 ---
 

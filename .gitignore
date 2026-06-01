@@ -1,0 +1,10 @@
+# Backups written by embed_ncec_data.py
+*.bak
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets
+.env
+*.env
